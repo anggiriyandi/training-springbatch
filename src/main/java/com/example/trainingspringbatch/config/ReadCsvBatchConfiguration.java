@@ -7,6 +7,7 @@ package com.example.trainingspringbatch.config;
 
 import com.example.trainingspringbatch.entity.Peserta;
 import com.example.trainingspringbatch.mapper.PesertaMapper;
+import com.example.trainingspringbatch.processor.PesertaItemProcessor;
 import com.example.trainingspringbatch.writter.PesertaItemWritter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -69,6 +70,7 @@ public class ReadCsvBatchConfiguration {
         return stepBuilderFactory.get("readCsvStep")
                 .<Peserta,Peserta> chunk(1)
                 .reader(reader())
+                .processor(new PesertaItemProcessor())
                 .writer(new PesertaItemWritter())
                 .build();
     }
