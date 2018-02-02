@@ -8,6 +8,8 @@ package com.example.trainingspringbatch.config;
 import com.example.trainingspringbatch.entity.Peserta;
 import com.example.trainingspringbatch.mapper.PesertaMapper;
 import com.example.trainingspringbatch.writter.PesertaItemWritter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.Step;
 import org.springframework.batch.core.configuration.annotation.JobBuilderFactory;
@@ -18,6 +20,7 @@ import org.springframework.batch.item.file.FlatFileItemReader;
 import org.springframework.batch.item.file.mapping.DefaultLineMapper;
 import org.springframework.batch.item.file.transform.DelimitedLineTokenizer;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.io.ClassPathResource;
@@ -35,10 +38,21 @@ public class ReadCsvBatchConfiguration {
     @Autowired
     private StepBuilderFactory stepBuilderFactory;
     
+    @Value("${file.location}")
+    private String fileLocation;
+
+    public void setFileLocation(String fileLocation) {
+        this.fileLocation = fileLocation;
+    }
+    
+    private  Logger logger = LoggerFactory.getLogger(ReadCsvBatchConfiguration.class);
+    
     @Bean
     public FlatFileItemReader<Peserta> reader(){
         FlatFileItemReader<Peserta> reader = new FlatFileItemReader<>();
-        reader.setResource(new ClassPathResource("data-peserta.csv"));
+        
+        logger.info("File Location : "+fileLocation);
+        reader.setResource(new ClassPathResource(fileLocation));
         
         DefaultLineMapper<Peserta> mapper = new DefaultLineMapper<Peserta>();
         DelimitedLineTokenizer tokenizer = new DelimitedLineTokenizer();
