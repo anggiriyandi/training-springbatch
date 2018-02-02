@@ -6,6 +6,8 @@
 package com.example.trainingspringbatch.config;
 
 import com.example.trainingspringbatch.entity.Peserta;
+import com.example.trainingspringbatch.listener.ItemProcessListener;
+import com.example.trainingspringbatch.listener.ItemReaderListener;
 import com.example.trainingspringbatch.mapper.PesertaMapper;
 import com.example.trainingspringbatch.processor.PesertaItemProcessor;
 import com.example.trainingspringbatch.writter.PesertaItemWritter;
@@ -39,6 +41,12 @@ public class ReadCsvBatchConfiguration {
     @Autowired
     private StepBuilderFactory stepBuilderFactory;
     
+    @Autowired
+    private ItemReaderListener itemReaderListener;
+    
+    @Autowired
+    private ItemProcessListener itemProcessListener;
+    
     @Value("${file.location}")
     private String fileLocation;
 
@@ -68,10 +76,12 @@ public class ReadCsvBatchConfiguration {
     @Bean
     public Step readCsvStep (){
         return stepBuilderFactory.get("readCsvStep")
-                .<Peserta,Peserta> chunk(1)
+                .<Peserta,Peserta> chunk(2)
                 .reader(reader())
                 .processor(new PesertaItemProcessor())
                 .writer(new PesertaItemWritter())
+//                .listener(itemReaderListener)
+                .listener(itemProcessListener)
                 .build();
     }
     
