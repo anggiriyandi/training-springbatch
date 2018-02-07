@@ -12,6 +12,7 @@ import com.example.trainingspringbatch.listener.SkipCheckingListener;
 import com.example.trainingspringbatch.listener.SkipListener;
 import com.example.trainingspringbatch.mapper.PesertaMapper;
 import com.example.trainingspringbatch.processor.PesertaItemProcessor;
+import com.example.trainingspringbatch.tasklet.DeletePesertaCsvTasklet;
 import com.example.trainingspringbatch.writter.PesertaItemWritter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,7 +35,7 @@ import org.springframework.core.io.ClassPathResource;
  * @author anggi
  */
 @Configuration
-public class ReadCsvBatchConfiguration {
+public class ReadCsvWithSequentialStep {
 
     @Autowired
     private JobBuilderFactory jobBuilderFactory;
@@ -57,6 +58,9 @@ public class ReadCsvBatchConfiguration {
     @Autowired
     private PesertaItemWritter itemWritter;
 
+    @Autowired
+    private DeletePesertaCsvTasklet deletePesertaCsvTasklet;
+
     @Value("${file.location}")
     private String fileLocation;
 
@@ -67,7 +71,7 @@ public class ReadCsvBatchConfiguration {
     private Logger logger = LoggerFactory.getLogger(ReadCsvBatchConfiguration.class);
 
     @Bean
-    public FlatFileItemReader<Peserta> reader() {
+    public FlatFileItemReader<Peserta> itemReaderCsv() {
         FlatFileItemReader<Peserta> reader = new FlatFileItemReader<>();
 
         logger.info("File Location : " + fileLocation);
@@ -84,10 +88,10 @@ public class ReadCsvBatchConfiguration {
     }
 
     @Bean
-    public Step readCsvStep() {
-        return stepBuilderFactory.get("readCsvStep")
+    public Step readFileCsvStep1() {
+        return stepBuilderFactory.get("readFileCsvStep1")
                 .<Peserta, Peserta>chunk(1)
-                .reader(reader())
+                .reader(itemReaderCsv())
                 .processor(new PesertaItemProcessor())
                 .writer(itemWritter)
                 .faultTolerant()
@@ -103,10 +107,20 @@ public class ReadCsvBatchConfiguration {
     }
 
     @Bean
-    public Job importDataPesertaFromCsv() {
-        return jobBuilderFactory.get("importDataPesertaFromCsv")
+    public Job sequentialImportDataPesertaFromCsv() {
+        return jobBuilderFactory.get("sequentialImportDataPesertaFromCsv")
                 .incrementer(new RunIdIncrementer())
-                .flow(readCsvStep())
+
+                //sequential step
+                .flow(readFileCsvStep1())
+                    .next(deleteCsvFile1())
                 .end().build();
+    }
+
+    @Bean
+    public Step deleteCsvFile1() {
+        return stepBuilderFactory.get("deleteCsvFile")
+                .tasklet(deletePesertaCsvTasklet)
+                .build();
     }
 }

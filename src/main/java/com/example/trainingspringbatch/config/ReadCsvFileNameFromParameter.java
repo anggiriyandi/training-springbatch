@@ -19,6 +19,7 @@ import org.springframework.batch.core.Job;
 import org.springframework.batch.core.Step;
 import org.springframework.batch.core.configuration.annotation.JobBuilderFactory;
 import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
+import org.springframework.batch.core.configuration.annotation.StepScope;
 import org.springframework.batch.core.launch.support.RunIdIncrementer;
 import org.springframework.batch.item.file.FlatFileItemReader;
 import org.springframework.batch.item.file.mapping.DefaultLineMapper;
@@ -28,13 +29,14 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.io.ClassPathResource;
+import org.springframework.core.io.FileSystemResource;
 
 /**
  *
  * @author anggi
  */
 @Configuration
-public class ReadCsvBatchConfiguration {
+public class ReadCsvFileNameFromParameter {
 
     @Autowired
     private JobBuilderFactory jobBuilderFactory;
@@ -56,22 +58,18 @@ public class ReadCsvBatchConfiguration {
 
     @Autowired
     private PesertaItemWritter itemWritter;
+    
+    private static final String WILL_BE_INJECTED = null;
 
-    @Value("${file.location}")
-    private String fileLocation;
-
-    public void setFileLocation(String fileLocation) {
-        this.fileLocation = fileLocation;
-    }
-
-    private Logger logger = LoggerFactory.getLogger(ReadCsvBatchConfiguration.class);
+    private Logger logger = LoggerFactory.getLogger(ReadCsvFileNameFromParameter.class);
 
     @Bean
-    public FlatFileItemReader<Peserta> reader() {
+    @StepScope
+    public FlatFileItemReader<Peserta> readerFromParameter(@Value("#{jobParameters['fileName']}") String fileName) {
         FlatFileItemReader<Peserta> reader = new FlatFileItemReader<>();
 
-        logger.info("File Location : " + fileLocation);
-        reader.setResource(new ClassPathResource(fileLocation));
+        logger.info("File Location reader : " + fileName);
+        reader.setResource(new FileSystemResource(fileName));
 
         DefaultLineMapper<Peserta> mapper = new DefaultLineMapper<Peserta>();
         DelimitedLineTokenizer tokenizer = new DelimitedLineTokenizer();
@@ -84,10 +82,10 @@ public class ReadCsvBatchConfiguration {
     }
 
     @Bean
-    public Step readCsvStep() {
-        return stepBuilderFactory.get("readCsvStep")
+    public Step readCsvStepFromParameter() {
+        return stepBuilderFactory.get("readCsvStepFromParameter")
                 .<Peserta, Peserta>chunk(1)
-                .reader(reader())
+                .reader(readerFromParameter(WILL_BE_INJECTED))
                 .processor(new PesertaItemProcessor())
                 .writer(itemWritter)
                 .faultTolerant()
@@ -103,10 +101,10 @@ public class ReadCsvBatchConfiguration {
     }
 
     @Bean
-    public Job importDataPesertaFromCsv() {
-        return jobBuilderFactory.get("importDataPesertaFromCsv")
+    public Job importDataPesertaFromCsvParameter() {
+        return jobBuilderFactory.get("importDataPesertaFromCsvParameter")
                 .incrementer(new RunIdIncrementer())
-                .flow(readCsvStep())
+                .flow(readCsvStepFromParameter())
                 .end().build();
     }
 }

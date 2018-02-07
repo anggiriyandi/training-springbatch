@@ -6,12 +6,14 @@
 package com.example.trainingspringbatch.dao;
 
 import com.example.trainingspringbatch.entity.Peserta;
+import com.example.trainingspringbatch.entity.PesertaError;
+import java.io.Serializable;
 import org.springframework.data.repository.PagingAndSortingRepository;
 
 /**
  *
  * @author anggi
  */
-public interface PesertaDao extends PagingAndSortingRepository<Peserta, String>{
-    public Peserta findBynama(String nama);
+public interface PesertaErrorDao extends PagingAndSortingRepository<PesertaError, String>{
+    
 }
